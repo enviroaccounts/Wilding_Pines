@@ -2,45 +2,71 @@ from dash import Dash, html, dcc
 import pandas as pd
 import plotly.graph_objects as go
 
-def load_forest_land_use_data():
-    """Loads forest land use change data."""
-    return pd.read_csv("static/data/LandUseChange_Forest_1990_2016.csv")
+def load_wildingpines_data():
+    """Loads Wilding Pines control work data."""
+    data = pd.read_csv("static/data/WildingPines.csv")
+    return data
 
-def prepare_forest_land_use_chart_data(data_df):
-    """Prepares data for the forest land use pie chart."""
-    land_use_data = data_df.iloc[0, 3:]  # land use columns start from the 4th column
-    labels = land_use_data.index.tolist()
-    values = land_use_data.values.tolist()
-    return labels, values
+def prepare_wildingpines_chart_data(data_df):
+    """Prepares chart data for Wilding Pines control work."""
+    # Dropping rows with NaN values
+    data_df = data_df.dropna()
 
-def create_forest_land_use_pie_chart(labels, values):
-    """Creates a pie chart for forest land use data."""
-    return go.Figure(data=[go.Pie(labels=labels, values=values)])
+    years = data_df['Year'].tolist()
+    days_operating = data_df['No. of days operating'].astype(int).tolist()
+    area_covered = data_df['Total area covered (ha)'].str.replace(',', '').astype(float).tolist()
+    return years, days_operating, area_covered
+def create_wildingpines_bar_chart(years, days_operating, area_covered):
+    """Creates a grouped bar chart for Wilding Pines data."""
+    fig = go.Figure(
+        data=[
+            go.Bar(name='Number of days control work was carried out', x=years, y=days_operating, yaxis='y', offsetgroup=1, marker_color='#f59f00'),
+            go.Bar(name='Area covered by WCIS control work', x=years, y=area_covered, yaxis='y2', offsetgroup=2, marker_color='#339af0')
+        ],
+        layout={
+            'yaxis': {
+                'title': 'Days Operating',
+                'range': [0, 250],
+                'dtick': 50,
+                'showgrid': True,  # Show grid lines
+                'gridcolor': '#dee2e6'  # Light grey color for grid lines
+            },
+            'yaxis2': {
+                'title': 'Area Covered (ha)',
+                'overlaying': 'y',
+                'side': 'right',
+                'range': [0, 16000],
+                'dtick': 2000
+            },
+            'legend': {
+                'x': 0.5,
+                'y': -0.1,
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'orientation': 'v'
+            },
+            'plot_bgcolor': 'rgba(0,0,0,0)',  # Transparent plot background
+            'paper_bgcolor': 'rgba(0,0,0,0)'  # Transparent paper background
+        }
+    )
 
-def setup_dash_layout(app, fig_pie_chart):
-    """Sets up the layout of the Dash app."""
-    app.layout = html.Div(children=[
-        html.Div([
-            dcc.Graph(id='forest-land-use-pie-chart', figure=fig_pie_chart)
-        ]),
-        html.Div([  
-            html.H3(id='forest-land-use-pie-chart-description',children='Land uses converted from forestland since 1990.')
-        ])
-    ],id='forest-land-use-pie-chart-layout')
+    fig.update_layout(barmode='group')
+
+    return fig
 
 def create_app():
     """Creates and configures the Dash app."""
     app = Dash(__name__)
 
-    # Load and prepare data
-    data_df = load_forest_land_use_data()
-    labels, values = prepare_forest_land_use_chart_data(data_df)
+    data_df = load_wildingpines_data()
 
-    # Create pie chart
-    fig_pie_chart = create_forest_land_use_pie_chart(labels, values)
+    years, days_operating, area_covered = prepare_wildingpines_chart_data(data_df)
 
-    # Setup layout
-    setup_dash_layout(app, fig_pie_chart)
+    fig_bar_chart = create_wildingpines_bar_chart(years, days_operating, area_covered)
+
+    app.layout = html.Div([
+        dcc.Graph(id='wildingpines-bar-chart', figure=fig_bar_chart)
+    ])
 
     return app
 

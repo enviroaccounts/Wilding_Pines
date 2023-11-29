@@ -1,6 +1,4 @@
-#forest-land-use-pie-chart-layout{
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    align-items: center;
+#wildingpines-bar-chart{
+    width:30rem;
+    height:45rem
 }
